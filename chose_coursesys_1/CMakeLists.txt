@@ -12,6 +12,8 @@ add_executable(chose_coursesys_1
     #math.cpp                              # 模块实现单元
     main.cpp
 
+
+
 )
 
 set(MODULE_INTERFACE_FILES
@@ -20,6 +22,8 @@ set(MODULE_INTERFACE_FILES
     course.cppm
     stydent.cppm
     score.cppm# 模块接口单元
+    database.cppm
+    teacher.cppm
 )
 
 source_group("Module Interfaces" FILES ${MODULE_INTERFACE_FILES})
