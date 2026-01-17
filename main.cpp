@@ -1,8 +1,12 @@
-//main.cpp
+
+// File: main.cpp   Version: 0.1.0   License: AGPLv3
+// Created:Lufengying 2024051604030 1276809756@qq.com       2026-01-17 18:04:15
+// Description:
+//
 import std;
-import domain.student;
-import domain.course;
-import domain.score;
+import registrar.student;
+import registrar.course;
+import registrar.score;
 
 int main() {
     std::cout << "课程管理系统 - 基础测试\n";
