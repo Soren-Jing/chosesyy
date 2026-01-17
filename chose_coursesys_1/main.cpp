@@ -1,10 +1,17 @@
+// Module
+// File: main.cpp   Version: 0.1.0   License: AGPLv3
+// Created:YIjunchen       2026-01-17 17:51:42
+// Description:
+//     a system of select course
+//     [v0.1.2]     2026-01-17 17:49:04
+//         * 初步实现学生教师和分数
+
 import std;
 import domain.student;
 import domain.course;
 import domain.score;
 import domain.teacher;
 import domain.database;
-
 using std::print;
 
 void testTeacherFunctions() {
