@@ -46,9 +46,3 @@ Score::Score(string sid, string cid, float s)
         throw std::invalid_argument("成绩必须在0-100之间");
     }
 }
-
-
-
-
-
-

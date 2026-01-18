@@ -1,41 +1,40 @@
+// File: domain/secretary.cppm
 export module domain.secretary;
 
 import std;
-import domain.student;
-import domain.course;
-import domain.teacher;
+import domain.person;  // 只导入person
 
-// 排课表条目
 struct ScheduleEntry {
     std::string teacherId;
     std::string courseId;
-    std::string timeSlot;          // 如 "Mon08:00-09:40"
+    std::string timeSlot;
     std::string classroom;
 };
 
-export class Secretary : public Student, public Course {
+export class Secretary : public Person {  //只继承Person
+private:
+    std::vector<ScheduleEntry> schedule;
+
 public:
-    // 构造函数：给 Student 和 Course 部分传 dummy 值
-    Secretary(const std::string& secId, const std::string& secName)
-        : Student(secId, secName, "教学秘书"),
-          Course("SEC-DUMMY", "SecretaryDummy", 999) {}
+    // 构造函数初始化Person部分
+    Secretary(const std::string& secId, const std::string& secName, int age = 25, std::string gender = "未知")
+        : Person(secId, secName, age, move(gender)) {}
+
     bool scheduleCourse(const std::string& teacherId,
                         const std::string& courseId,
                         const std::string& timeSlot,
-                        const std::string& classroom);//核心排课接口
-
+                        const std::string& classroom);
     bool cancelSchedule(const std::string& teacherId,
                         const std::string& courseId,
                         const std::string& timeSlot);
-
     void printSchedule() const;
 
 private:
-    std::vector<ScheduleEntry> schedule;                 //简单顺序表
     bool timeConflict(const std::string& teacherId,
-                      const std::string& timeSlot) const;//工具：检查教师在该时间段是否已有排课
+                      const std::string& timeSlot) const;
 };
 
+//  实现部分（无变动）
 bool Secretary::timeConflict(const std::string& teacherId,
                              const std::string& timeSlot) const {
     for (const auto& e : schedule)

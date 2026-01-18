@@ -16,7 +16,7 @@ private:
 
 public:
     Course(string id, string name, int maxCap);
-    string getCourseId() const;               //获取课程ID
+    string getCourseId() const;               // 获取课程ID
     string getCourseName() const;             //获取课程名
     int getMaxCapacity() const;               //获取最大容量
     int getCurrentCapacity() const;           //获取当前容量
@@ -82,18 +82,3 @@ bool Course::setCapacity(int newCapacity) {
     maxCapacity = newCapacity;
     return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

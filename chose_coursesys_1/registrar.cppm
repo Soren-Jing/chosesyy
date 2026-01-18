@@ -5,7 +5,7 @@ import domain.student;
 import domain.course;
 import domain.teacher;
 import domain.score;
-
+import domain.person;
 
 using std::string;
 using std::vector;
@@ -28,11 +28,35 @@ public:
     bool dropCourse(const string& studentId, const string& courseId);         //统一退课接口
     vector<const Course*> getStudentCourses(const string& studentId) const ;  //获取学生的选课列表（包含课程详情）v
     vector<const Student*> getCourseStudents(const string& courseId) const;   //获取课程的学生列表
-    void displayAllRegistrations() const;                                     //展示所有学生选课情况
+    //void displayAllRegistrations() const;                                     //展示所有学生选课情况
     const unordered_map<string, unique_ptr<Course>>& getAllCourses() const ;  //获取所有课程信息
     const unordered_map<string, unique_ptr<Student>>& getAllStudents() const ;//获取所有学生信息
-    bool printStudentRecord(const std::string& studentId,                     //打印单个学生的完整选课记录
-                            std::ostream& out = std::cout) const;             //如果学生不存在返回 false，成功打印返回 true
+    bool printStudentRecord(const std::string& studentId) const;              //打印单个学生的完整选课记录
+                                                                              //如果学生不存在返回f，成功打印返回t
+    const Person* findPerson(const string& id) const;
+    // 展示所有学生选课情况
+    void displayAllRegistrations() const {
+            std::println("\n=== 学生选课总览 ===");
+            for (const auto& [studentId, student] : students) {
+                std::print("学生 {} ({}, 年龄:{}, 性别:{}): ",
+                          student->getName(), studentId,
+                          student->getAge(), student->getGender());  // ✅ 使用Person接口
+                auto courses = getStudentCourses(studentId);
+                if (courses.empty()) {
+                    std::print("未选课");
+                } else {
+                    for (const auto* course : courses) {
+                        std::print("{} ", course->getCourseName());
+                    }
+                }
+                std::println("");
+            }
+        }
+
+        const auto& getAllStudents()  { return students; }
+        const auto& getAllCourses()  { return courses; }
+        const auto& getAllTeachers()  { return teachers; }
+
 };
 
 
@@ -147,22 +171,6 @@ vector<const Student*> Registrar::getCourseStudents(const string& courseId) cons
     return result;
 }
 
-// 展示所有学生选课情况
-void Registrar::displayAllRegistrations() const {
-    std::println("\n=== 学生选课总览 ===");
-    for (const auto& [studentId, student] : students) {
-        std::print("学生 {} ({}): ", student->getName(), studentId);
-        auto courses = getStudentCourses(studentId);
-        if (courses.empty()) {
-            std::print("未选课");
-        } else {
-            for (const auto* course : courses) {
-                std::print("{} ", course->getCourseName());
-            }
-        }
-        std::println("");
-    }
-}
 
 // 获取所有课程信息
 const unordered_map<string, unique_ptr<Course>>& Registrar::getAllCourses() const {
@@ -175,32 +183,35 @@ const unordered_map<string, unique_ptr<Student>>& Registrar::getAllStudents() co
 }
 // 打印单个学生的完整选课记录
 // 如果学生不存在返回 false，成功打印返回 true
-bool Registrar::printStudentRecord(const std::string& studentId,
-                        std::ostream& out) const
-{
+bool Registrar::printStudentRecord(const string& studentId) const {
     auto it = students.find(studentId);
-    if (it == students.end()) return false;          // 学生不存在
+    if (it == students.end()) return false;
 
     const Student* stu = it->second.get();
-    auto           courses = getStudentCourses(studentId);
+    auto courses = getStudentCourses(studentId);
 
-    out << "-------- 选课记录 --------\n";
-    out << "学号: " << stu->getStudentId()
-        << "  姓名: " << stu->getName()
-        << "  专业: " << stu->getMajor() << '\n';
+    std::println("-------- 选课记录 --------");
+    std::println("学号: {}  姓名: {}  专业: {}  年龄: {}  性别: {}",
+                stu->getStudentId(), stu->getName(),
+                stu->getMajor(), stu->getAge(), stu->getGender());
 
     if (courses.empty()) {
-        out << "  当前未选修任何课程。\n";
+        std::println("  当前未选修任何课程。");
     } else {
-        out << "  已选课程 (" << courses.size() << " 门):\n";
+        std::println("  已选课程 ({} 门):", courses.size());
         for (const Course* c : courses) {
-            out << "    · " << std::left << std::setw(20)
-                << c->getCourseName()
-                << " [ID: " << c->getCourseId() << "]  "
-                << "容量: " << c->getCurrentCapacity() << '/'
-                << c->getMaxCapacity() << '\n';
+            std::println("    · {:<20} [ID: {}]  容量: {}/{}",
+                        c->getCourseName(), c->getCourseId(),
+                        c->getCurrentCapacity(), c->getMaxCapacity());
         }
     }
-    out << "--------------------------\n";
+    std::println("--------------------------");
     return true;
+}
+
+// 新增：通过Person基类统一查询
+const Person* Registrar::findPerson(const string& id) const {
+   if (auto it = students.find(id); it != students.end()) return it->second.get();
+   if (auto it = teachers.find(id); it != teachers.end()) return it->second.get();
+   return nullptr;
 }

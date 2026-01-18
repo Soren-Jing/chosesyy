@@ -29,6 +29,7 @@ set(ENTITY_FILES
     stydent.cppm
     teacher.cppm
     score.cppm
+    person.cppm
 )
 source_group("Domain" FILES ${DOMAIN_FILES})
 source_group("Entity" FILES ${ENTITY_FILES})
