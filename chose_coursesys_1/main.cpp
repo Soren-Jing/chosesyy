@@ -36,9 +36,15 @@ void testTeacherFunctions() {
           teacher2->getName(), teacher2->getTeacherId(), teacher2->getDepartment());
 
     print("\n2. 设置教授课程:\n");
-    teacher1->addTeachingCourse("C001");
-    teacher1->addTeachingCourse("C002");
-    teacher2->addTeachingCourse("C003");
+    try {
+        teacher1->addTeachingCourse("C001");
+        teacher1->addTeachingCourse("C002");
+        teacher2->addTeachingCourse("C003");
+        // 测试空课程ID，触发异常
+        teacher1->addTeachingCourse("");
+    } catch (const std::invalid_argument& e) {
+                print("   异常提示: {}\n", e.what());
+    }
 
     print("   王教授教授课程: ");
     for (const auto& courseId : teacher1->getTeachingCourses()) {
