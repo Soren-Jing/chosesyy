@@ -15,17 +15,17 @@ private:
 
 public:
     Teacher(string id, string name, string dept);
-    string getTeacherId() const;// 获取教师ID
-    string getName() const;// 获取姓名
-    string getDepartment() const;// 部门
-    bool addTeachingCourse(const string& courseId); // 添加教授的课程
-    bool removeTeachingCourse(const string& courseId);// 优化：参数统一用 string（和类内 using 匹配）
-    const vector<string>& getTeachingCourses() const ;// 获取教授的课程列表
+    string getTeacherId() const;                      //    获取教师ID
+    string getName() const;                           //    获取姓名
+    string getDepartment() const;                     //    部门
+    bool addTeachingCourse(const string& courseId);   //    添加教授的课程
+    bool removeTeachingCourse(const string& courseId);//    优化：参数统一用 string（和类内 using 匹配）
+    const vector<string>& getTeachingCourses() const ;//    获取教授的课程列表
     bool isTeachingCourse(const string& courseId) const ;// 检查是否教授某门课程
 
     std::unique_ptr<Score> inputScore(const string& studentId,
                                      const string& courseId,
-                                     float scoreValue);// 录入/修改学生成绩（基础版本）
+                                     float scoreValue);//   录入/修改学生成绩（基础版本）
 
     vector<std::unique_ptr<Score>> batchInputScores(
         const vector<std::tuple<string, string, float>>& scoreData);// 批量录入成绩
@@ -44,16 +44,16 @@ public:
 Teacher::Teacher(string id, string name, string dept)
     : teacherId(std::move(id)), name(std::move(name)), department(std::move(dept)) {}
 
-// 获取教师ID
+//获取教师ID
 string Teacher::getTeacherId() const { return teacherId; }
 
-// 获取姓名
+//获取姓名
 string Teacher::getName() const { return name; }
 
-// 获取部门（实现不动，只改声明）
+//获取部门（实现不动，只改声明）
 string Teacher::getDepartment() const { return department; }
 
-// 添加教授的课程
+//添加教授的课程
 bool Teacher::addTeachingCourse(const string& courseId) {
     // 检查是否已经在教授此课程
     for (const auto& cid : teachingCourses) {
@@ -65,7 +65,7 @@ bool Teacher::addTeachingCourse(const string& courseId) {
     return true;
 }
 
-// 移除教授的课程
+//移除教授的课程
 bool Teacher::removeTeachingCourse(const string& courseId) {
     for (auto it = teachingCourses.begin(); it != teachingCourses.end(); ++it) {
         if (*it == courseId) {
@@ -76,12 +76,12 @@ bool Teacher::removeTeachingCourse(const string& courseId) {
     return false;
 }
 
-// 获取教授的课程列表
+//获取教授的课程列表
 const vector<string>& Teacher::getTeachingCourses() const {
     return teachingCourses;
 }
 
-// 检查是否教授某门课程
+//检查是否教授某门课程
 bool Teacher::isTeachingCourse(const string& courseId) const {
     for (const auto& cid : teachingCourses) {
         if (cid == courseId) {
@@ -91,11 +91,11 @@ bool Teacher::isTeachingCourse(const string& courseId) const {
     return false;
 }
 
-// 录入/修改学生成绩（基础版本）
+//录入/修改学生成绩（基础版本）
 std::unique_ptr<Score> Teacher::inputScore(const string& studentId,
                                  const string& courseId,
                                  float scoreValue) {
-    // 验证教师是否教授此课程
+    //验证教师是否教授此课程
     if (!isTeachingCourse(courseId)) {
         return nullptr; // 不教授此课程，无权录入成绩
     }
@@ -107,7 +107,7 @@ std::unique_ptr<Score> Teacher::inputScore(const string& studentId,
     }
 }
 
-// 批量录入成绩
+//批量录入成绩
 vector<std::unique_ptr<Score>> Teacher::batchInputScores(
     const std::vector<std::tuple<string, string, float>>& scoreData) {
 
@@ -122,13 +122,13 @@ vector<std::unique_ptr<Score>> Teacher::batchInputScores(
     return scores;
 }
 
-// 生成课程统计（模拟数据）
+//生成课程统计（模拟数据）
 Teacher::CourseStatistics Teacher::getCourseStatistics(const string& courseId) const {
     if (!isTeachingCourse(courseId)) {
         throw std::runtime_error("不教授此课程");
     }
 
-    // 模拟数据 - 实际中应该从数据库查询
+    //模拟数据 - 实际中应该从数据库查询
     return CourseStatistics{
         courseId,
         25,    // 学生人数

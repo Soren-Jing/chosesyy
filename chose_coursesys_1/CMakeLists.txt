@@ -12,26 +12,32 @@ add_executable(chose_coursesys_1
     #math.cpp                              # 模块实现单元
     main.cpp
 
-
-
 )
 
-set(MODULE_INTERFACE_FILES
+set(DOMAIN_FILES
+    #${MODULE_LIB_DIR1}/utils.cppm         #添加模块库的模块接口单元
+    #math.cppm
+    # 模块接口单元
+    database.cppm
+     registrar.cppm
+     secretary.cppm
+)
+set(ENTITY_FILES
     #${MODULE_LIB_DIR1}/utils.cppm         #添加模块库的模块接口单元
     #math.cppm
     course.cppm
     stydent.cppm
-    score.cppm# 模块接口单元
-    database.cppm
     teacher.cppm
+    score.cppm
 )
+source_group("Domain" FILES ${DOMAIN_FILES})
+source_group("Entity" FILES ${ENTITY_FILES})
 
-source_group("Module Interfaces" FILES ${MODULE_INTERFACE_FILES})
 target_sources(chose_coursesys_1  PRIVATE FILE_SET cxx_modules TYPE CXX_MODULES
     BASE_DIRS                              # 配置BASE_DIRS，用于组织构建输出目录，以便构建不同目录中(同名的)模块文件.
         #${MODULE_LIB_DIR1}
         ${CMAKE_CURRENT_SOURCE_DIR}
-    FILES ${MODULE_INTERFACE_FILES}
+    FILES ${DOMAIN_FILES} ${ENTITY_FILES}
 )
 target_compile_features(chose_coursesys_1 PRIVATE cxx_std_23)
 

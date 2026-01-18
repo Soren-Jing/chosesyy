@@ -1,17 +1,20 @@
 // Module
 // File: main.cpp   Version: 0.1.0   License: AGPLv3
-// Created:YIjunchen       2026-01-17 17:51:42
+// Created:YIjunchen  LUfengying Chen    2026-01-17 17:51:42
 // Description:
 //     a system of select course
 //     [v0.1.2]     2026-01-17 17:49:04
 //         * 初步实现学生教师和分数
-
+//     [v0.1.2]     2026-01-18 13:39:57
+//         *初步实现了教学秘书类和排课功能
 import std;
 import domain.student;
 import domain.course;
 import domain.score;
 import domain.teacher;
 import domain.database;
+import domain.registrar;
+import domain.secretary;
 using std::print;
 
 void testTeacherFunctions() {
@@ -170,94 +173,119 @@ void testDatabaseFunctions() {
 */
 
 int main() {
-    print("课程管理系统 - 基础测试\n");
-    print("=====================\n\n");
+    print("课程管理系统 - 代管者模式测试\n");
+        print("==============================\n\n");
 
-    try {
-        // 1. 创建学生
-        print("1. 创建学生:\n");
-        auto student1 = std::make_unique<Student>("S001", "张三", "计算机科学");
-        auto student2 = std::make_unique<Student>("S002", "李四", "软件工程");
-
-        print("  学生1: {} ({})\n", student1->getName(), student1->getStudentId());
-        print("  学生2: {} ({})\n", student2->getName(), student2->getStudentId());
-
-        // 2. 创建课程
-        print("\n2. 创建课程:\n");
-        auto course1 = std::make_unique<Course>("C001", "C++程序设计", 2); // 容量设为2便于测试
-        auto course2 = std::make_unique<Course>("C002", "数据结构", 3);
-
-        print("  课程1: {} (容量: {}, 剩余: {})\n",
-              course1->getCourseName(), course1->getMaxCapacity(), course1->getRemainingCapacity());
-        print("  课程2: {} (容量: {}, 剩余: {})\n",
-              course2->getCourseName(), course2->getMaxCapacity(), course2->getRemainingCapacity());
-
-        // 3. 测试选课功能
-        print("\n3. 测试选课:\n");
-
-        // 学生1选课
-        bool success = student1->selectCourse("C001");
-        if (success && course1->enrollStudent()) {
-            print("  ✓ 学生 {} 成功选修 {}\n", student1->getName(), course1->getCourseName());
-        } else {
-            print("  ✗ 选课失败\n");
-        }
-
-        // 学生2选同一门课
-        success = student2->selectCourse("C001");
-        if (success && course1->enrollStudent()) {
-            print("  ✓ 学生 {} 成功选修 {}\n", student2->getName(), course1->getCourseName());
-        }
-
-        // 检查课程是否已满
-        print("  课程 {} 状态: {} (当前人数: {})\n",
-              course1->getCourseName(),
-              (course1->isFull() ? "已满" : "未满"),
-              course1->getCurrentCapacity());
-
-        // 4. 测试成绩功能
-        print("\n4. 测试成绩功能:\n");
-
-        // 创建成绩
-        Score score1("S001", "C001", 92.5f);
-        print("  成绩创建: 学生 {} 课程 {} 成绩: {} 等级: {}\n",
-              score1.getStudentId(), score1.getCourseId(), score1.getScore(), score1.getGrade());
-
-        // 测试成绩有效性检查
         try {
-            Score invalidScore("S001", "C001", 150.0f);
-            print("  ✗ 应该抛出异常但没有\n");
-        } catch (const std::invalid_argument& e) {
-            print("  ✓ 成功捕获无效成绩异常: {}\n", e.what());
+            // 创建代管者实例（Facade）
+            Registrar registrar;
+
+            // 1. 添加学生
+            print("1. 添加学生:\n");
+            registrar.addStudent(std::make_unique<Student>("S001", "张三", "计算机科学"));
+            registrar.addStudent(std::make_unique<Student>("S002", "李四", "软件工程"));
+            registrar.addStudent(std::make_unique<Student>("S003", "王五", "网络工程"));
+
+            // 2. 添加课程（容量设为2便于测试满员情况）
+            print("\n2. 添加课程:\n");
+            registrar.addCourse(std::make_unique<Course>("C001", "C++程序设计", 2));
+            registrar.addCourse(std::make_unique<Course>("C002", "数据结构", 3));
+            registrar.addCourse(std::make_unique<Course>("C003", "数据库原理", 2));
+
+            // 显示初始状态
+            registrar.displayAllRegistrations();
+
+            // 3. 测试选课功能
+            print("\n3. 测试选课:\n");
+
+            // 学生1选课成功
+            if (registrar.registerCourse("S001", "C001")) {
+                print("  ✓ 张三成功选修 C++程序设计\n");
+            }
+
+            // 学生2选同一门课成功
+            if (registrar.registerCourse("S002", "C001")) {
+                print("  ✓ 李四成功选修 C++程序设计\n");
+            }
+
+            // 学生3选已满课程失败
+            if (!registrar.registerCourse("S003", "C001")) {
+                print("  ✓ 王五选课失败（C++程序设计已满）\n");
+            }
+
+            // 学生3选其他课程成功
+            if (registrar.registerCourse("S003", "C002")) {
+                print("  ✓ 王五成功选修 数据结构\n");
+            }
+
+            // 重复选课失败
+            if (!registrar.registerCourse("S001", "C001")) {
+                print("  ✓ 张三重复选课失败（已选过C001）\n");
+            }
+
+            // 4. 展示选课结果
+            print("\n4. 选课结果:\n");
+            registrar.displayAllRegistrations();
+            // 查看学号 S001 的选课情况
+            if (!registrar.printStudentRecord("S001"))
+                std::cerr << "未找到该学生！\n";
+            // 5. 测试退课
+            print("\n5. 测试退课:\n");
+            if (registrar.dropCourse("S001", "C001")) {
+                print("  ✓ 张三成功退选 C++程序设计\n");
+            }
+
+            // 再次展示
+            print("\n6. 退课后的状态:\n");
+            registrar.displayAllRegistrations();
+
+            // 7. 测试查询功能
+            print("\n7. 测试查询功能:\n");
+
+            // 查询学生选课
+            auto s1Courses = registrar.getStudentCourses("S001");
+            print("  张三的选课: ");
+            for (const auto* course : s1Courses) {
+                print("{} ", course->getCourseName());
+            }
+            print("\n");
+
+            // 查询课程学生
+            auto c1Students = registrar.getCourseStudents("C001");
+            print("  C++程序设计的学生: ");
+            for (const auto* student : c1Students) {
+                print("{} ", student->getName());
+            }
+            print("\n");
+
+            // 8. 原有测试功能
+             testTeacherFunctions();
+            //9. 测试教学秘书排课
+            print("\n8. 测试教学秘书排课功能:\n");
+            Secretary secretary("SEC001", "赵秘书");
+
+            // 先给教师排两门课
+            secretary.scheduleCourse("T001", "C001", "Mon08:00-09:40", "A101");
+            secretary.scheduleCourse("T001", "C002", "Tue10:00-11:40", "B203");
+            // 冲突排课（同一教师同一时间）
+            bool conflict = secretary.scheduleCourse("T001", "C003", "Mon08:00-09:40", "A102");
+            print("  冲突排课结果: {}\n", conflict ? "成功" : "失败（时间冲突）");
+
+            secretary.printSchedule();
+
+            // 撤排一门
+            secretary.cancelSchedule("T001", "C002", "Tue10:00-11:40");
+            print("\n  撤排后:\n");
+            secretary.printSchedule();
+
+            print("\n==============================\n");
+            print("代管者模式测试完成!\n");
+
+        } catch (const std::exception& e) {
+            std::cerr << "程序错误: " << e.what() << "\n";
+            return 1;
         }
 
-        // 5. 测试查询学生成绩（模拟）
-        print("\n5. 测试查询成绩:\n");
-        auto scores = student1->queryScore();
-        print("  学生{} 的成绩:\n",student1->getName());
-        for (const auto& score : scores) {
-            print("    - 课程: {}, 成绩: {}, 等级: {}\n",
-                       score.getCourseId(), score.getScore(), score.getGrade());
-        }
-
-        // 6. 测试退课
-        print("\n6. 测试退课:\n");
-        if (student1->dropCourse("C001") && course1->dropStudent()) {
-            print("  ✓ 学生 {} 成功退选 {}\n", student1->getName(), course1->getCourseName());
-            print("  课程当前人数: {}\n", course1->getCurrentCapacity());
-        }
-        // 测试新增的教师功能
-        testTeacherFunctions();
-
-        // 测试新增的数据库功能
-        //testDatabaseFunctions();
-        print("\n===============================\n");
-        print("基础测试完成!\n");
-
-    } catch (const std::exception& e) {
-        std::cerr << "程序错误: " << e.what() << "\n";
-        return 1;
-    }
 
     return 0;
 }
