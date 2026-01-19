@@ -50,6 +50,13 @@ string Teacher::getName() const { return Person::getName(); }
 string Teacher::getDepartment() const { return department; }
 
 bool Teacher::addTeachingCourse(const string& courseId) {
+<<<<<<< HEAD
+=======
+    // 修改：空值校验，抛出异常
+    if (courseId.empty()) {
+        throw std::invalid_argument("课程ID不能为空");
+    }
+>>>>>>> temp_dev1
     for (const auto& cid : teachingCourses) {
         if (cid == courseId) return false;
     }
