@@ -284,7 +284,6 @@ public:
     }
 };
 
-<<<<<<< HEAD
 // 数据库连接池（简单版本）
 export class ConnectionPool {
 private:
@@ -312,40 +311,6 @@ public:
             auto conn = std::make_unique<Connection>(config);
             if (conn->connect()) {
                 return conn;
-=======
-// 数据库连接池
-export class ConnectionPool {
-private:
-    ConnectionConfig config;
-    //修改：
-    std::vector<std::unique_ptr<Connection>> idleConnections;  // 空闲连接
-    std::vector<std::unique_ptr<Connection>> usedConnections;  // 使用中连接
-    size_t maxPoolSize;
-    std::mutex poolMutex;//线程安全锁
-    static constexpr size_t DEFAULT_POOL_SIZE = 10; // 常量提取
-
-public:
-    ConnectionPool(const ConnectionConfig& cfg, size_t  DEFAULT_POOL_SIZE)
-        : config(cfg), maxPoolSize(maxPoolSize) {}
-
-    // 获取连接
-    std::unique_ptr<Connection> getConnection() {
-            std::lock_guard<std::mutex> lock(poolMutex);
-            // 优先复用空闲连接
-            if (!idleConnections.empty()) {
-                auto conn = std::move(idleConnections.back());
-                idleConnections.pop_back();
-                usedConnections.push_back(std::move(conn));
-                return std::move(usedConnections.back());
-            }
-
-        // 创建新连接
-        if (idleConnections.size() + usedConnections.size() < maxPoolSize) {
-                    auto conn = std::make_unique<Connection>(config);
-                    if (conn->connect()) {
-                        usedConnections.push_back(std::move(conn));
-                        return std::move(usedConnections.back());
->>>>>>> temp_dev1
             }
         }
 
@@ -354,7 +319,6 @@ public:
 
     // 归还连接
     void returnConnection(std::unique_ptr<Connection> conn) {
-<<<<<<< HEAD
         if (conn && conn->isConnected()) {
             connections.push_back(std::move(conn));
         }
@@ -374,25 +338,6 @@ public:
     size_t getConnectionCount() const {
         return connections.size();
     }
-=======
-           std::lock_guard<std::mutex> lock(poolMutex);
-           if (conn && conn->isConnected()) {
-               // 从使用中列表移除
-               auto it = std::find_if(usedConnections.begin(), usedConnections.end(),
-                   [&](const std::unique_ptr<Connection>& c) {
-                       return c.get() == conn.get();
-                   });
-               if (it != usedConnections.end()) {
-                   usedConnections.erase(it);
-               }
-               // 加入空闲列表
-               idleConnections.push_back(std::move(conn));
-           }
-       }
-
-    // 关闭所有连接
-
->>>>>>> temp_dev1
 };
 
 
