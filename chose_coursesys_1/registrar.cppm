@@ -6,7 +6,7 @@ import domain.course;
 import domain.teacher;
 import domain.score;
 import domain.person;
-
+import database;
 using std::string;
 using std::vector;
 using std::unique_ptr;
@@ -40,7 +40,7 @@ public:
             for (const auto& [studentId, student] : students) {
                 std::print("学生 {} ({}, 年龄:{}, 性别:{}): ",
                           student->getName(), studentId,
-                          student->getAge(), student->getGender());  // ✅ 使用Person接口
+                          student->getAge(), student->getGender());  // 使用Person接口
                 auto courses = getStudentCourses(studentId);
                 if (courses.empty()) {
                     std::print("未选课");
@@ -62,7 +62,7 @@ public:
 
 // 添加学生
 void Registrar::addStudent(unique_ptr<Student> student) {
-    students[student->getStudentId()] = std::move(student);
+    students[student->getStudentId()] = std::move(student);//因为是指针所以只能进行资源转移
 }
 
 // 添加课程
@@ -77,65 +77,49 @@ void Registrar::addTeacher(unique_ptr<Teacher> teacher) {
 
 // 统一选课接口（代管者模式核心）
 // 返回: true=成功, false=失败2/2
-bool Registrar::registerCourse(const string& studentId, const string& courseId) {
-    // 1. 检查学生和课程是否存在
-    auto itStudent = students.find(studentId);
-    auto itCourse = courses.find(courseId);
-    if (itStudent == students.end() || itCourse == courses.end()) {
-        return false; // 学生或课程不存在
-    }
+// 核心修改：选课同步到数据库
+    bool Registrar::registerCourse(const std::string& studentId, const std::string& courseId) {
+        auto itStudent = students.find(studentId);
+        auto itCourse = courses.find(courseId);
+        if (itStudent == students.end() || itCourse == courses.end()) return false;
 
-    Student* student = itStudent->second.get();
-    Course* course = itCourse->second.get();
+        Student* student = itStudent->second.get();
+        Course* course = itCourse->second.get();
+        if (course->isFull() || student->hasSelectedCourse(courseId)) return false;
 
-    // 2. 检查课程是否已满
-    if (course->isFull()) {
-        return false;
-    }
+        // 1. 先写入数据库
+        if (!addEnrollmentToDB(studentId, courseId)) return false;
 
-    // 3. 检查学生是否已选此课程
-    if (student->hasSelectedCourse(courseId)) {
-        return false;
-    }
+        // 2. 再更新内存状态
+        bool studentOk = student->selectCourse(courseId);
+        bool courseOk = course->enrollStudent();
 
-    // 4. 执行选课（同时更新学生和课程状态）
-    bool studentOk = student->selectCourse(courseId);
-    bool courseOk = course->enrollStudent();
-
-    // 5. 确保两个操作都成功
-    if (studentOk && courseOk) {
+        // 3. 失败则回滚数据库
+        if (!(studentOk && courseOk)) {
+            removeEnrollmentFromDB(studentId, courseId);
+            return false;
+        }
         return true;
-    } else {
-        // 回滚避免误操作
-        if (studentOk) student->dropCourse(courseId);
-        if (courseOk) course->dropStudent();
-        return false;
-    }
-}
-
-// 统一退课接口
-bool Registrar::dropCourse(const string& studentId, const string& courseId) {
-    auto itStudent = students.find(studentId);
-    auto itCourse = courses.find(courseId);
-    if (itStudent == students.end() || itCourse == courses.end()) {
-        return false;
     }
 
-    Student* student = itStudent->second.get();
-    Course* course = itCourse->second.get();
+    // 核心修改：退课同步到数据库
+    bool Registrar::dropCourse(const std::string& studentId, const std::string& courseId) {
+        auto itStudent = students.find(studentId);
+        auto itCourse = courses.find(courseId);
+        if (itStudent == students.end() || itCourse == courses.end()) return false;
 
-    // 检查学生是否选了此课程
-    if (!student->hasSelectedCourse(courseId)) {
-        return false;
+        Student* student = itStudent->second.get();
+        Course* course = itCourse->second.get();
+        if (!student->hasSelectedCourse(courseId)) return false;
+
+        // 1. 先删除数据库记录
+        if (!removeEnrollmentFromDB(studentId, courseId)) return false;
+
+        // 2. 再更新内存状态
+        bool studentOk = student->dropCourse(courseId);
+        bool courseOk = course->dropStudent();
+        return studentOk && courseOk;
     }
-
-    // 执行退课
-    bool studentOk = student->dropCourse(courseId);
-    bool courseOk = course->dropStudent();
-
-    return studentOk && courseOk;
-}
-
 // 获取学生的选课列表（包含课程详情）
 vector<const Course*> Registrar::getStudentCourses(const string& studentId) const {
     vector<const Course*> result;

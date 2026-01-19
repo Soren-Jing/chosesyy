@@ -21,6 +21,7 @@ public:
     void setScore(float s);                 // 设置成绩
     string getGrade() const;
 };
+
 //获取成绩等级
 string Score::getGrade() const {
     if (score >= 90) return "A";
@@ -29,6 +30,7 @@ string Score::getGrade() const {
     if (score >= 60) return "D";
     return "F";
 }
+
 //设置成绩
 void Score::setScore(float s) {
     if (s < 0 || s > 100) {
@@ -36,8 +38,10 @@ void Score::setScore(float s) {
     }
     score = s;
 }
+
 //获取课程ID
 string Score::getCourseId() const { return courseId; }
+
 //获取学生ID
 string Score::getStudentId() const { return studentId; }
 Score::Score(string sid, string cid, float s)

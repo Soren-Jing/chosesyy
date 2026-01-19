@@ -1,4 +1,3 @@
-// File: domain/secretary.cppm
 export module domain.secretary;
 
 import std;
