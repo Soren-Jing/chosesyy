@@ -1,1 +1,92 @@
 龚老师您好，由于我们第一次演示录制的视频是qt运行的，所以补充了1第二个演示视频，部署到本地命令行运行release版本。感谢龚老师过目，老师辛苦了
+ 选课系统软件文档
+一、文档概述
+本文档基于C++实现的选排课系统，说明系统的选课核心功能、技术实现、操作流程及相关设计细节，为开发维护、功能测试和用户使用提供针对性参考，满足实训的考核要求。目标用户为老师及系统使用用户（学生、管理员）。
+二、选课核心需求
+（一）业务需求
+学生可选择已开设的课程，退选已选课程，查询个人选课记录。系统需校验选课合法性，包括学生/课程存在性、课程容量、是否重复选课等。选课/退课操作需同步更新学生选课列表与课程选课人数，确保数据一致性。支持查询课程的选课学生名单，以及学生的已选课程详情。
+（二）技术需求
+基于面向对象编程实现选课逻辑，采用代管者模式管理选课数据。选课流程具备事务特性，操作失败时执行回滚，避免数据异常。支持批量查询选课信息，提供高效的数据检索能力。与系统其他模块（学生管理、课程管理）解耦，通过统一接口交互。
+三、选课模块设计
+（一）模块架构
+表现层：通过ConsoleUIModule类提供选课/退课/查询的终端交互菜单，接收用户输入并展示结果。应用逻辑层：CourseSystemService类封装选课相关统一接口，作为表现层与领域层的中间适配层。领域层：Student类、Course类封装选课相关属性与行为，Registrar类作为代管者协调选课逻辑。数据管理层：通过Registrar类的容器存储学生、课程数据，模拟数据库模块提供数据持久化支持。
+（二）核心技术选型
+开发语言：C++。核心容器采用unordered_map（快速查找学生/课程）、vector（存储选课列表）。设计模式：代管者模式（Registrar类统一管理选课交互）。数据一致性保障：操作回滚机制、状态同步更新。
+四、选课相关核心类与接口
+（一）核心实体类
+Student类（student.cppm）
+选课相关属性：已选课程列表（selectedCourses，存储课程ID）
+核心接口：
+       selectCourse(const string& courseId)：添加课程ID到已选列表，返回选课结果。
+       dropCourse(const string& courseId)：从已选列表移除课程ID，返回退课结果。
+       hasSelectedCourse(const string& courseId)：判断是否已选该课程。
+       getSelectedCourses() const：获取已选课程ID列表。
+Course类（course.cppm）
+ 选课相关属性：最大容量、当前容量
+ 核心接口：
+        enrollStudent()：选课成功时增加当前容量，返回操作结果。
+        dropStudent()：退课成功时减少当前容量，返回操作结果。
+        isFull() const：判断课程是否已满。
+        getCurrentCapacity() const：获取当前选课人数。
+        getMaxCapacity() const：获取课程最大容量。
+（二）核心管理类
+ Registrar类（registrar.cppm）
+选课核心管理角色，存储学生、课程对象集合，提供统一选课接口。
+核心接口：
+       registerCourse(const string& studentId, const string& courseId)：统一选课接口，返回选课成功（true）或失败（false）。
+       dropCourse(const string& studentId, const string& courseId)：统一退课接口，返回退课成功（true）或失败（false）。
+       getStudentCourses(const string& studentId) const：获取学生已选课程详情列表。
+       getCourseStudents(const string& courseId) const：获取课程的选课学生列表。
+       printStudentRecord(const string& studentId) const：打印学生完整选课记录。
+ CourseSystemService类（main.cpp）
+选课业务适配层，提供对外统一选课相关接口，解耦UI与领域层。
+核心接口：
+       studentEnroll(const string& sid, const string& cid)：学生选课接口，调用Registrar的registerCourse方法。
+       studentDropCourse(const string& sid, const string& cid)：学生退课接口，调用Registrar的dropCourse方法。
+       getStudentCourses(const string& id)：获取学生选课列表（课程ID+课程名称）。
+       getCourseStudents(const string& cid)：获取课程选课学生列表（学号+姓名）。
+ConsoleUIModule类（main.cpp）
+选课交互UI层，提供选课管理子菜单，接收用户输入并调用业务接口。
+核心交互功能：学生选课：输入学号和课程ID，执行选课操作并反馈结果。学生退课：输入学号和课程ID，执行退课操作并反馈结果。查看选课记录：输入学号，展示学生已选课程详情。
+教学秘书类：（Secretary） 是课程管理系统中负责教学排课管理的核心角色类，继承自 Person 基类，封装了排课、撤课、冲突检测及排课记录展示等核心业务逻辑，依赖domain.person 模块提供的基础能力。
+五、核心流程
+（一）选课流程
+1.用户通过UI菜单选择学生选课功能，输入学号（sid）和课程ID（cid）。
+2.CourseSystemService调用studentEnroll接口，转发请求至Registrar的registerCourse方法。
+3.Registrar执行校验逻辑：检查学生ID和课程ID是否存在于对应容器中。检查课程是否已满（调用Course的isFull方法）。检查学生是否已选该课程（调用Student的hasSelectedCourse方法）。
+4. 校验通过后，执行选调用Student的selectCourse方法添加课程ID到学生选课列表。调用Course的enrollStudent方法增加课程当前容量。
+5.若两步操作均成功，返回true（选课成功）；若任一操作失败，执行回滚：若学生已添加课程ID，调用dropCourse方法移除。若课程已增加容量，调用dropStudent方法减少。
+6UI层展示选课成功或失败信息（失败原因包括学生/课程不存在、课程已满、重复选课等）。
+（二）退课流程
+1.用户通过UI菜单选择“学生退课”功能，输入学号（sid）和课程ID（cid）。
+2.CourseSystemService调用studentDropCourse接口，转发请求至Registrar的dropCourse方法。
+3.Registrar执行校验逻辑：检查学生ID和课程ID是否存在。检查学生是否已选该课程。
+4.校验通过后，执行退课操作：调用Student的dropCourse方法移除课程ID。调用Course的dropStudent方法减少课程当前容量。
+5.两步作均成功则返回true（退课成功），否则返回false（退课失败，原因包括学生/课程不存在、未选该课程等）。
+6.UI层展示退课结果。
+还有查看成绩和登入成绩，排课，添加教师，添加学生等流程同理则再次不赘述
+六、选课操作说明
+（一）操作前提
+1.系统已添加学生数据（学号、姓名等信息）。
+2.系统已添加课程数据（课程ID、课程名称、容量等信息）。
+3.操作时需准确输入学号和课程ID（区分大小写，与系统中存储的ID一致）。
+（二）具体操作步骤
+1.学生选课
+运行系统，在主菜单选择“4.选课管理”，进入选课管理子菜单。
+选择“1.学生选课“，按提示输入学号（如S001）和课程ID（如C001）。系统反馈选课结果：成功则提示“选课成功！”，失败则提示具体原因。
+按回车键返回上一级菜单。
+2.学生退课
+在选课管理子菜单选择“2.学生退课“，输入学号和已选课程ID。系统反馈退课结果：成功则提示“退课成功！”，失败则提示具体原因。
+3.查看选课记录
+在选课管理子菜单选择“3.查看学生选课”，输入学号。系统展示该学生的已选课程列表（包含课程ID和课程名称），无选课记录则提示“无选课记录。”。
+排课，输入成绩类似
+ （三）测试数据说明
+系统初始化默认添加以下测试数据，可直接用于选课操作：
+ 测试学生：S001（张三）、S002（李四）、S003（王五）
+ 测试课程：C001（C++程序设计，容量2）、C002（数据结构，容量3）、C003（数据库原理，容量2）
+七、选课模块注意事项
+1.课程容量限制：当课程当前容量达到最大容量时，无法继续选课。
+2.重复选课限制：学生不能重复选择同一门课程。
+3.退课限制：只能退选已选的课程，退课成功后课程容量同步减少。
+4.ID 准确性：学号和课程ID输入错误会导致选课/退课失败，需严格按照系统中已存在的ID输入。
+5.数据一致性：选课/退课操作会同步更新学生和课程的状态，若操作过程中出现异常，系统会自动回滚，确保数据无偏差。
